@@ -23,7 +23,6 @@ from .custom_processing import (
 from .meteo import collect_meteo, download_meteo
 from .scenario import Scenario
 from .track_ensemble import setup_track_ensemble
-from .tsunami import CoSMoS_Tsunami
 from .webviewer import WebViewer
 
 try:
