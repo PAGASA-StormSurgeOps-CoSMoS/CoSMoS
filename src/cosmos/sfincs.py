@@ -120,7 +120,7 @@ class CoSMoS_SFINCS(Model):
             self.make_flood_map = True
             self.make_water_level_map = False
             self.meteo_precipitation = (
-                True  # Always use meteo precipitation in flood map mode
+                False  # Always use meteo precipitation in flood map mode
             )
         elif self.role == "large_scale":
             # We need to make max water levels, but not a flood map
