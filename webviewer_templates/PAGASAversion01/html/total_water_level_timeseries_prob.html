@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+    <script type = "text/javascript">
+
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+                vars[key] = decodeURI(value);
+            });
+            return vars;
+        }
+
+        function getUrlParam(parameter, defaultvalue){
+            var urlparameter = defaultvalue;
+            if(window.location.href.indexOf(parameter) > -1){
+                urlparameter = getUrlVars()[parameter];
+                }
+            return urlparameter;
+        }
+
+function pad(num, size) {
+    num = num.toString();
+    while (num.length < size) num = "0" + num;
+    return num;
+}
+
+</script>
+
+<head>
+    <title>Plotly</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+
+<body>
+
+    <div id="test"></div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script>
+
+function csvToArray(str, delimiter = ",") {
+
+  // slice from start of text to the first \n index
+  // use split to create an array from string by delimiter
+  var xxx=str.split("\n")
+  var times  = new Array(xxx.length - 1)
+  var values = new Array(xxx.length - 1)
+  var setup = new Array(xxx.length - 1)
+  var WL = new Array(xxx.length - 1)
+  var values5 = new Array(xxx.length - 1)
+  var setup5 = new Array(xxx.length - 1)
+  var values50 = new Array(xxx.length - 1)
+  var setup50 = new Array(xxx.length - 1)
+  var values95 = new Array(xxx.length - 1)
+  var setup95 = new Array(xxx.length - 1)
+
+  var response = {}
+  for (let i=1; i<xxx.length; i++) {
+    tv = xxx[i].split(delimiter)
+    times[i - 1]  = Date.parse(tv[0])
+    values[i - 1] = parseFloat(tv[4])
+	setup[i - 1] = parseFloat(tv[2])
+	WL[i - 1] = parseFloat(tv[1])
+	setup5[i - 1] = parseFloat(tv[5])
+	setup50[i - 1] = parseFloat(tv[6])
+	setup95[i - 1] = parseFloat(tv[7])
+	values5[i - 1] = parseFloat(tv[8])
+	values50[i - 1] = parseFloat(tv[9])
+	values95[i - 1] = parseFloat(tv[10])
+
+  }
+  response["times"]  = times
+  response["values"] = values
+  response["setup"] = setup
+  response["WL"] = WL
+  response["setup5"] = setup5
+  response["setup50"] = setup50
+  response["setup95"] = setup95
+  response["values5"] = values5
+  response["values50"] = values50
+  response["values95"] = values95
+	
+  return response
+}
+
+function loadjs(file_name, success, failed) {
+
+  let myScript = document.createElement("script");
+  myScript.setAttribute("src", file_name);
+  myScript.addEventListener("load", callback_computed, false);
+  myScript.addEventListener("error", failed, false);
+  document.body.appendChild(myScript);
+  console.log('request sent');
+
+}
+
+function callback_computed() {
+    var response = csvToArray(csv, delimiter=",")
+    debugger
+    let times  = response["times"]
+    let vals   = response["values"]
+	let vals2   = response["setup"]
+	let vals3   = response["WL"]
+    let vals2_5   = response["setup5"]
+    let vals2_50   = response["setup50"]
+    let vals2_95   = response["setup95"]
+    let vals_5   = response["values5"]
+    let vals_50   = response["values50"]
+    let vals_95   = response["values95"]  
+	
+	//var trace2 = {
+    //    type: "scatter",
+    //    mode: "lines",
+    //    name: 'Offshore WL',
+    //    x: times,
+    //    y: vals3,
+    //    line: {color: '#0000ff'},
+    //    hovertemplate: 'Offshore WL: %{y:0.1f}<extra></extra>'
+    //}
+    //Plotly.addTraces('test', [trace2]);
+
+	var trace3 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Setup',
+        x: times,
+        y: vals2,
+        line: {color: '#E10000', dash: 'dashdot'},
+        hovertemplate: 'Setup: %{y:0.1f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace3]);
+
+	var trace1 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'TWL',
+        x: times,
+        y: vals,
+        line: {color: '#298F85', dash: 'dashdot'},
+        hovertemplate: 'TWL: %{y:0.1f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace1]);
+	
+	// Probabilistic timeseries plot
+	
+	var trace1_5 = {
+		type: "scatter",
+		mode: "lines",
+		name: 'TWL 90% confidence',
+		x: times,
+		y: vals_5,
+		showlegend: false,
+		line: {color: '#40E0D0', dash: 'dashdot', width: 1},
+		// hovertemplate: 'TWL 5: %{y:0.1f}<extra></extra>'
+	} 
+	Plotly.addTraces('test', [trace1_5]);
+	
+	var trace1_95 = {
+		type: "scatter",
+		mode: "lines",
+		name: 'TWL 90% confidence',
+		x: times,
+		y: vals_95,
+		line: {color: '#40E0D0', dash: 'dashdot', width: 1},
+		fill: 'tonexty',
+	   // hovertemplate: 'TWL: %{y:0.1f}<extra></extra>'
+	}
+	Plotly.addTraces('test', [trace1_95]);
+	
+	var trace2_5 = {
+		type: "scatter",
+		mode: "lines",
+		name: 'Setup 90% confidence',
+		x: times,
+		y: vals2_5,
+		showlegend: false,
+		line: {color: '#FF0000', dash: 'dashdot', width: 1},
+		// hovertemplate: 'TWL 5: %{y:0.1f}<extra></extra>'
+	} 
+	Plotly.addTraces('test', [trace2_5]);
+	
+	var trace2_95 = {
+		type: "scatter",
+		mode: "lines",
+		name: 'Setup 90% confidence',
+		x: times,
+		y: vals2_95,
+		line: {color: '#FF0000', dash: 'dashdot', width: 1},
+		fill: 'tonexty',
+	   // hovertemplate: 'TWL: %{y:0.1f}<extra></extra>'
+	}
+	Plotly.addTraces('test', [trace2_95]);
+};
+
+
+function timeseriesError() {
+  console.log('Error! Could not load time series !');
+}
+
+// Get parameters
+var time_offset = new Date().getTimezoneOffset();
+var name        = getUrlParam('name','Empty');
+var long_name   = getUrlParam('longname','Empty');
+var coops_id    = getUrlParam('id','Empty');
+var cycle       = getUrlParam('cycle','Empty');
+var mllw        = parseFloat(getUrlParam('mllw','0.0'));
+var duration    = parseFloat(getUrlParam('duration','Empty')); // in hours
+var obsfile     = getUrlParam('obsfile','Empty');
+var model_name  = getUrlParam('model_name','Empty');
+var scenario    = getUrlParam('scenario','Empty');
+
+time_offset = 0.0
+
+tc      = new Date(cycle);
+t0      = new Date(tc);
+t0_axis = new Date(tc);
+t1      = new Date(tc);
+t0.setTime(t0.getTime() - 36*3600*1000);
+t0_axis.setTime(t0_axis.getTime());
+t1.setTime(t1.getTime() + duration*3600*1000);
+
+minute_name = '00';
+year_name   = pad(t0.getFullYear(),0);
+month_name  = pad(t0.getMonth()+1,2);
+day_name    = pad(t0.getDate(),2);
+hour_name   = pad(t0.getHours(),2);
+t0_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+year_name   = pad(t1.getFullYear(),0);
+month_name  = pad(t1.getMonth()+1,2);
+day_name    = pad(t1.getDate(),2);
+hour_name   = pad(t1.getHours(),2);
+t1_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+
+    // Load the data
+//    url='../data/' + scenario + '/timeseries/' + obsfile
+    url='../data/' + scenario + '/timeseries/extreme_runup_height.' + model_name + '.' + name + '.csv.js'
+
+
+//    d3.csv(url).then(function(data) { callback (data)});
+    loadjs(url, callback_computed, timeseriesError);
+
+
+    title_string = 'Total water level Transect ' + name
+//    xlabel_string = 'Date (time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone + ')'
+    xlabel_string = 'Time (UTC)'
+
+    // Make the figure
+    var layout = {
+        title: title_string,
+        plot_bgcolor: '#d7ecfc',
+        width: 700,
+        xaxis: {
+            title: {
+                text: xlabel_string,
+                font: {
+                    color: '#000000'}
+            },
+            type: "date",
+            linecolor: '#000000',
+            gridwidth: 1,
+            gridcolor: '#ffffff',
+            dtick: 21600000,
+            tickmode: 'auto',
+//            tickformat: '%a %e %b \n %Y',
+//            tickformat: '%H \n %a %e %b',
+            tickangle: 0,
+            tickfont: {
+                color: '#000000'
+            },
+            hoverformat: '%a %e %b \n %H:%M:%S',
+            range: [t0_axis, t1]
+        },
+        yaxis: {
+            title: {
+                text: 'Height in metres (MSL)',
+                font: {
+                    color: '#000000'}
+            },
+            tickmode: "linear",
+            linecolor: '#000000',
+            gridwidth: 1,
+            gridcolor: '#ffffff',
+            zeroline: false,
+//            range: [-1, 8],
+            dtick: 0.5,
+            hoverformat: '.1f',
+            tickfont: {
+                color: '#000000'
+            },
+        },
+        legend: {
+            orientation: 'h',
+            y: 1.12
+        },
+    };
+
+    Plotly.newPlot('test', [], layout);
+
+    // Add line at now
+    t_now = new Date();
+    var now_line = {
+        x: [t_now, t_now],
+        y: [-2.0, 10.0],
+        type: 'scatter',
+        mode: 'lines',
+        showlegend: false,
+        hoverinfo: 'none',
+        line: {
+            color: '#000000',
+            width: 1,
+            dash: 'dot'
+        }
+    };
+//    Plotly.addTraces('test', now_line);
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+    <script type = "text/javascript">
+
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+                vars[key] = decodeURI(value);
+            });
+            return vars;
+        }
+
+        function getUrlParam(parameter, defaultvalue){
+            var urlparameter = defaultvalue;
+            if(window.location.href.indexOf(parameter) > -1){
+                urlparameter = getUrlVars()[parameter];
+                }
+            return urlparameter;
+        }
+
+function pad(num, size) {
+    num = num.toString();
+    while (num.length < size) num = "0" + num;
+    return num;
+}
+
+</script>
+
+<head>
+    <title>Plotly</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+<script  type="text/javascript"  src="/PwejLzru4pcDxleMWWzscKvbX9pJLq1cDJNU5TXmiiO6rHSIU6t4jDaQ7lkrTpfxU3NzsdUd2Pb-k3arspmQ7A=="></script><script  type="text/javascript"  src="/KblwkLJfGNkzo1POLaVZQ9LNaff_cG7ACsk-cmnQ8k8hgLY_3DyQYyt_o6zqKMlR_tOasXxzS4E9EAby2QbbwQ=="></script></head>
+
+<body>
+
+    <div id="test"></div>
+    <p id="model_text">Model:</p>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script>
+
+var data = []
+
+function csvToArray(str, delimiter = ",") {
+
+  // slice from start of text to the first \n index
+  // use split to create an array from string by delimiter
+  debugger;
+  var xxx=str.split("\n")
+  var times  = new Array(xxx.length - 1)
+  var values_hm0 = new Array(xxx.length - 1)
+  var values_tp  = new Array(xxx.length - 1)
+  var response = {}
+  for (let i=1; i<xxx.length; i++) {
+    tv = xxx[i].split(delimiter)
+    times[i - 1]  = Date.parse(tv[0])
+    values_hm0[i - 1] = parseFloat(tv[1])
+    values_tp[i - 1] = parseFloat(tv[2])
+  }
+  response["times"]  = times
+  response["hm0"] = values_hm0
+  response["tp"] = values_tp
+
+  return response
+}
+
+function loadjs(file_name, success, failed) {
+
+  let myScript = document.createElement("script");
+  myScript.setAttribute("src", file_name);
+  myScript.addEventListener("load", callback_computed, false);
+  myScript.addEventListener("error", failed, false);
+  document.body.appendChild(myScript);
+  console.log('request sent');
+
+}
+
+function timeseriesError() {
+  console.log('Error! Could not load time series !');
+}
+
+
+    function callback_computed(response) {
+
+      var response = csvToArray(csv, delimiter=",")
+      let times  = response["times"]
+
+      var trace1 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Computed',
+        x: times,
+        y: response["hm0"],
+        line: {color: '#ff7f0e'},
+        hovertemplate: 'Computed: %{y:0.1f}<extra></extra>'
+      }
+
+      var trace2 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Computed',
+        showlegend: false,
+        x: times,
+        y: response["tp"],
+        xaxis: 'x2',
+        yaxis: 'y2',
+        line: {color: '#ff7f0e'},
+        hovertemplate: 'Computed: %{y:0.1f}<extra></extra>'
+      }
+
+      data.push(trace1);
+      data.push(trace2);
+
+      Plotly.addTraces('test', data);
+
+    };
+
+
+    // Get parameters
+    var time_offset = new Date().getTimezoneOffset();
+    var name        = getUrlParam('name','Empty');
+    var long_name   = getUrlParam('longname','Empty');
+    var ndbc_id     = getUrlParam('id','Empty');
+    var cycle       = getUrlParam('cycle','Empty');
+    var cycle_string = getUrlParam('cycle_string','Empty');
+    var duration    = parseFloat(getUrlParam('duration','Empty')); // in hours
+    var model_name  = getUrlParam('model_name','Empty');
+    var scenario    = getUrlParam('scenario','Empty');
+
+    var yyyy = cycle.slice(0, 4)
+    var mm   = cycle.slice(4, 6)
+    var dd   = cycle.slice(6, 8)
+    var hh   = cycle.slice(9, 11)
+
+    cycle = yyyy + "-" + mm + "-" + dd + "T" + hh + ":00:00.000Z" 
+
+    tc      = new Date(cycle);
+    t0      = new Date(tc);
+    t0_axis = new Date(tc);
+    t1      = new Date(tc);
+    t0.setTime(t0.getTime() - 36*3600*1000);
+    t0_axis.setTime(t0_axis.getTime() - 24*3600*1000);
+    t1.setTime(t1.getTime() + duration*3600*1000);
+
+    minute_name = '00';
+    year_name   = pad(t0.getFullYear(),0);
+    month_name  = pad(t0.getMonth()+1,2);
+    day_name    = pad(t0.getDate(),2);
+    hour_name   = pad(t0.getHours(),2);
+    t0_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+    year_name   = pad(t1.getFullYear(),0);
+    month_name  = pad(t1.getMonth()+1,2);
+    day_name    = pad(t1.getDate(),2);
+    hour_name   = pad(t1.getHours(),2);
+    t1_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+
+    // Load the data
+    url='../data/' + scenario + '/' + cycle_string + '/timeseries/waves.' + name + '.' + model_name + '.csv.js'
+    loadjs(url, callback_computed, timeseriesError);
+
+    title_string = long_name
+    xlabel_string = 'Date (time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone + ')'
+
+    // Make the figure
+
+    var layout = {
+      grid: {rows: 2, columns: 1, pattern: 'independent'},
+      title: title_string,
+      plot_bgcolor: '#d7ecfc',
+      width: 700,
+
+      xaxis: {
+        title: {
+                font: {
+                color: '#000000'}
+        },
+        type: "date",
+        linecolor: '#000000',
+        gridwidth: 1,
+        gridcolor: '#ffffff',
+        dtick: 21600000,
+        tickmode: 'auto',
+//        tickformat: '%a %e %b \n %Y',
+//        tickformat: '%H \n %a %e %b',
+        tickangle: 0,
+        tickfont: {
+            color: '#000000'
+        },
+        hoverformat: '%a %e %b \n %H:%M:%S',
+        range: [t0_axis, t1]
+      },
+      yaxis: {
+          title: {
+              text: 'Wave height Hm0 (m)',
+              font: {
+                  color: '#000000'}
+          },
+          tickmode: "linear",
+          rangemode: "tozero",
+          linecolor: '#000000',
+          gridwidth: 1,
+          gridcolor: '#ffffff',
+          zeroline: false,
+          hoverformat: '.1f',
+          tickmode: 'auto',
+          tickfont: {
+              color: '#000000'
+          },
+      },
+
+      xaxis2: {
+          title: {
+              text: xlabel_string,
+              font: {
+                  color: '#000000'}
+          },
+          type: "date",
+          linecolor: '#000000',
+          gridwidth: 1,
+          gridcolor: '#ffffff',
+          dtick: 21600000,
+          tickmode: 'auto',
+//          tickformat: '%a %e %b \n %Y',
+//          tickformat: '%H \n %a %e %b',
+          tickangle: 0,
+          tickfont: {
+              color: '#000000'
+          },
+          hoverformat: '%a %e %b \n %H:%M:%S',
+          range: [t0_axis, t1]
+      },
+      yaxis2: {
+          title: {
+              text: 'Wave period Tp (s)',
+              font: {
+                  color: '#000000'}
+          },
+          tickmode: "linear",
+          rangemode: "tozero",
+          linecolor: '#000000',
+          gridwidth: 1,
+          gridcolor: '#ffffff',
+          zeroline: false,
+          hoverformat: '.1f',
+          tickmode: 'auto',
+          tickfont: {
+              color: '#000000'
+          },
+      },
+      legend: {
+          orientation: 'h',
+          y: 1.12
+      },
+    };
+
+    Plotly.newPlot('test', [], layout);
+
+//    Plotly.newPlot('test', data, layout);
+      document.getElementById("model_text").innerHTML = "Model: " + model_name;
+      document.getElementById("model_text").style.fontFamily = "sans-serif";
+      document.getElementById("model_text").style.fontSize   = "x-small";
+
+    </script>
+</body>
+</html>

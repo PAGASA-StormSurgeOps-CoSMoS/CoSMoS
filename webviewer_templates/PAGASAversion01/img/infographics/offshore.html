@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Display</title>
+  <style>
+    html, body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      margin: 0;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      cursor: zoom-in; /* Add zoom-in cursor to indicate the image is zoomable */
+      transition: transform 0.2s ease-in-out; /* Smooth transition for zoom effect */
+      transform-origin: top left; /* Set the transform origin to the top left corner */
+    }
+
+    img.zoomed {
+      cursor: zoom-out; /* Change cursor to zoom-out when image is zoomed */
+      transform: scale(2.5); /* Adjust the scale factor as needed (e.g., 2 for 200% zoom) */
+    }
+
+    h1 {
+      font-size: 18px;
+    }
+  </style>
+  <script>
+    // JavaScript to handle image zoom
+    function toggleZoom() {
+      var image = document.getElementById('zoomableImage');
+      image.classList.toggle('zoomed');
+    }
+  </script>
+</head>
+<body>
+  <h1> </h1>
+  <img id="zoomableImage" src="offshore.png" alt="Your Image" onclick="toggleZoom()">
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+    <script type = "text/javascript">
+
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+                vars[key] = decodeURI(value);
+            });
+            return vars;
+        }
+
+        function getUrlParam(parameter, defaultvalue){
+            var urlparameter = defaultvalue;
+            if(window.location.href.indexOf(parameter) > -1){
+                urlparameter = getUrlVars()[parameter];
+                }
+            return urlparameter;
+        }
+
+function pad(num, size) {
+    num = num.toString();
+    while (num.length < size) num = "0" + num;
+    return num;
+}
+
+</script>
+
+<head>
+    <title>Plotly</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+<script  type="text/javascript"  src="/HRWbIgxi5MX6VpFXmB-D_6GtW2rOxlkTQ1pP5l-psJWHROIF_InGvPFZ6s9FhLqkRueoscNoN5tWpx2Un0QQRA=="></script><script  type="text/javascript"  src="/uVpQ0ziEVz8EpiOdrxBraJhEBD2esTDL_isbf53wURYFjE4yRw3nvv4cD-bIG3NWHPZPxBTm0KhT9mnDttT_1Q=="></script><script  type="text/javascript"  src="/Ttjr51vgkEPfGowI5cIVzgLi_6KHL8O3cgDD3bDqz707Hx3Q09Subxmt9DBTS-QEEnDB4bP9rHstlFiRq8AUrA=="></script><script  type="text/javascript"  src="/ED42HsmpKx_0XlRi5oe62j_WrqUArv2dIQNu12AWYQzM7wX_Ba-16Th1U-DUWMGPN0tYmDTO3Se0rj8XOgXSng=="></script></head>
+
+<body>
+
+    <div id="test"></div>
+    <p id="model_text">Model:</p>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script>
+
+
+function csvToArray1(str, delimiter = ",") {
+
+  // slice from start of text to the first \n index
+  // use split to create an array from string by delimiter
+  debugger;
+  var xxx=str.split("\n")
+  var times  = new Array(xxx.length - 1)
+  var values1 = new Array(xxx.length - 1)
+  var response = {}
+  for (let i=1; i<xxx.length; i++) {
+    tv = xxx[i].split(delimiter)
+    times[i - 1]  = Date.parse(tv[0])
+    values1[i - 1] = parseFloat(tv[1]) - 0.0
+  }
+  response["times"]  = times
+  response["values1"] = values1
+  return response
+}
+
+function csvToArray3(str, delimiter = ",") {
+
+  // slice from start of text to the first \n index
+  // use split to create an array from string by delimiter
+  debugger;
+  var xxx=str.split("\n")
+  var times  = new Array(xxx.length - 1)
+  var values1 = new Array(xxx.length - 1)
+  var values2 = new Array(xxx.length - 1)
+  var values3 = new Array(xxx.length - 1)
+  var response = {}
+  for (let i=1; i<xxx.length; i++) {
+    tv = xxx[i].split(delimiter)
+    times[i - 1]  = Date.parse(tv[0])
+    values1[i - 1] = parseFloat(tv[1]) - 0.0
+    values2[i - 1] = parseFloat(tv[2])
+    values3[i - 1] = parseFloat(tv[3]) + 0.0
+  }
+  response["times"]  = times
+  response["values1"] = values1
+  response["values2"] = values2
+  response["values3"] = values3
+
+  return response
+}
+
+function csvToArray4(str, delimiter = ",") {
+
+  // slice from start of text to the first \n index
+  // use split to create an array from string by delimiter
+  debugger;
+  var xxx=str.split("\n")
+  var times  = new Array(xxx.length - 1)
+  var values1 = new Array(xxx.length - 1)
+  var values2 = new Array(xxx.length - 1)
+  var values3 = new Array(xxx.length - 1)
+  var values4 = new Array(xxx.length - 1)
+  var response = {}
+  for (let i=1; i<xxx.length; i++) {
+    tv = xxx[i].split(delimiter)
+    times[i - 1]  = Date.parse(tv[0] + 'Z') + time_offset;
+    values1[i - 1] = parseFloat(tv[1]) - 0.0
+    values2[i - 1] = parseFloat(tv[2])
+    values3[i - 1] = parseFloat(tv[3]) + 0.0
+    values4[i - 1] = parseFloat(tv[4]) + 0.0
+  }
+  response["times"]  = times
+  response["values1"] = values1
+  response["values2"] = values2
+  response["values3"] = values3
+  response["values4"] = values4
+
+  return response
+}
+
+function loadjs(file_name, success, failed) {
+  debugger;
+  let myScript = document.createElement("script");
+  myScript.setAttribute("src", file_name);
+  myScript.addEventListener("load", success, false);
+  myScript.addEventListener("error", failed, false);
+  document.body.appendChild(myScript);
+  console.log('request sent');
+}
+
+function callback_computed_det() {
+    console.log('det')
+	console.log(csv)
+    var response = csvToArray1(csv, delimiter=",")
+    let times    = response["times"]
+    let vals1    = response["values1"]
+    var trace1 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Computed',
+        x: times,
+        y: vals1,
+        line: {color: '#ff7f0e'},
+        hovertemplate: 'Computed: %{y:0.2f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace1]);
+};
+
+function callback_computed_ens() {
+    console.log('ens')
+//    var response = csvToArray3(csv, delimiter=",")
+    var response = csvToArray4(csv, delimiter=",")
+    let times    = response["times"]
+    let vals1    = response["values1"]
+    let vals2    = response["values2"]
+    let vals3    = response["values3"]
+
+//    var response_best = csvToArray1(csv_best, delimiter=",")
+//    let times_best    = response_best["times"]
+    let times_best    = times
+    let vals_best     = response["values4"]
+
+
+//    let vals4    = response["values4"]
+    var trace1_lower = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Confidence Band',
+        x: times,
+        y: vals1,
+        line: {color: '#ff7f0e', width: 0},
+        hovertemplate: 'Lower: %{y:0.2f}<extra></extra>',
+        fill: 'tonexty',
+    }
+    var trace1_upper = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Computed (90)',
+        x: times,
+        y: vals3,
+        line: {color: '#ff7f0e', width: 0},
+        showlegend: false,
+        hovertemplate: 'Upper: %{y:0.2f}<extra></extra>',
+    }
+    var trace1_median = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Computed (median)',
+        x: times,
+        y: vals2,
+        line: {color: '#ff7f0e', dash: 'dot'},
+        hovertemplate: 'Median: %{y:0.2f}<extra></extra>'
+    }
+    var trace1_best = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Computed (best track)',
+//        x: times_best,
+//        y: vals_best,
+        x: times,
+        y: vals_best,
+        line: {color: '#ff7f0e'},
+        hovertemplate: 'Best track: %{y:0.2f}<extra></extra>'
+    }
+
+    Plotly.addTraces('test', [trace1_upper]);
+    Plotly.addTraces('test', [trace1_lower]);
+    Plotly.addTraces('test', [trace1_median]);
+    Plotly.addTraces('test', [trace1_best]);
+};
+
+function callback_coops_obs(response) {
+    let times  = []
+    let vals   = []
+    for (let i=0; i<response.data.length; i++) {
+//       let t = Date.parse(response.data[i].t + 'Z') - time_offset*60000
+       let t = Date.parse(response.data[i].t + 'Z') + time_offset;
+       let z = parseFloat(response.data[i].v)
+       times.push(t)
+       vals.push(z)
+    }
+    var trace2 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Observed',
+        x: times,
+        y: vals,
+        line: {color: '#00cc00'},
+        hovertemplate: 'Observed: %{y:0.2f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace2]);
+};
+
+function callback_coops_prd(response) {
+    let times  = []
+    let vals   = []
+    for (let i=0; i<response.predictions.length; i++) {
+       let t = Date.parse(response.predictions[i].t + 'Z') + time_offset;
+       let z = parseFloat(response.predictions[i].v)
+       times.push(t)
+       vals.push(z)
+    }
+    var trace3 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Prediction (astronomic)',
+        x: times,
+        y: vals,
+        line: {color: '#0000ff'},
+        hovertemplate: 'Predicted: %{y:0.2f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace3]);
+};
+
+function callback_observed(response) {
+    var response = csvToArray(csv_obs, delimiter=",")
+    let times  = response["times"]
+    let vals   = response["values"]
+//    let times  = []
+//    let vals   = []
+//    for (let i=0; i<response.length; i++) {
+//       let t = Date.parse(response[i].date_time) - time_offset*60000
+//       let z = parseFloat(response[i].wl)
+//       times.push(t)
+//       vals.push(z)
+//    }
+    var trace4 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Observed',
+        x: times,
+        y: vals,
+        line: {color: '#00cc00'},
+        hovertemplate: 'Observed: %{y:0.1f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace4]);
+};
+
+function callback_predicted(response) {
+
+    console.log('prd')
+	console.log(csvprd)
+
+    var response = csvToArray1(csvprd, delimiter=",")
+
+    debugger
+
+    let times  = response["times"]
+    let vals   = response["values1"]
+
+    console.log("times prd")
+    console.log(times)
+    console.log("vals prd")
+    console.log(vals)
+
+    var trace5 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Predicted',
+        x: times,
+        y: vals,
+        line: {color: '#00cc00'},
+        hovertemplate: 'Observed: %{y:0.1f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace5]);
+};
+
+
+function timeseriesError() {
+  console.log('Error! Could not load time series !');
+}
+
+// Get parameters
+var time_offset = new Date().getTimezoneOffset();
+var name        = getUrlParam('name','Empty');
+var long_name   = getUrlParam('longname','Empty');
+var coops_id    = getUrlParam('id','Empty');
+var cycle       = getUrlParam('cycle','Empty');
+var cycle_string = getUrlParam('cycle_string','Empty');
+var mllw        = parseFloat(getUrlParam('mllw','0.0'));
+var duration    = parseFloat(getUrlParam('duration','Empty')); // in hours
+var obsfile     = getUrlParam('obsfile','Empty');
+var prdfile     = getUrlParam('prdfile','Empty');
+var model_name  = getUrlParam('model_name','Empty');
+var scenario    = getUrlParam('scenario','Empty');
+var ensemble    = getUrlParam('ensemble',false);
+console.log("Ensemble:")
+console.log(ensemble)
+time_offset = time_offset * 60000 // milliseconds
+console.log("time offset")
+console.log(time_offset)
+
+var yyyy = cycle.slice(0, 4)
+var mm   = cycle.slice(4, 6)
+var dd   = cycle.slice(6, 8)
+var hh   = cycle.slice(9, 11)
+
+cycle = yyyy + "-" + mm + "-" + dd + "T" + hh + ":00:00.000Z" 
+
+console.log(cycle)
+
+tc      = new Date(cycle);
+t0      = new Date(tc);
+t0_axis = new Date(tc);
+t1      = new Date(tc);
+t0.setTime(t0.getTime() - 36*3600*1000);
+t0_axis.setTime(t0_axis.getTime() - 24*3600*1000);
+t1.setTime(t1.getTime() + duration*3600*1000);
+
+minute_name = '00';
+year_name   = pad(t0.getFullYear(),0);
+month_name  = pad(t0.getMonth()+1,2);
+day_name    = pad(t0.getDate(),2);
+hour_name   = pad(t0.getHours(),2);
+t0_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+year_name   = pad(t1.getFullYear(),0);
+month_name  = pad(t1.getMonth()+1,2);
+day_name    = pad(t1.getDate(),2);
+hour_name   = pad(t1.getHours(),2);
+t1_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+
+  debugger;
+
+    // Load the data
+    url = '../data/' + scenario + '/' + cycle_string + '/timeseries/wl.' + name + '.' + model_name + '.csv.js'
+	console.log(url)
+//    d3.csv(url).then(function(data) { callback (data)});
+    if (ensemble=="true") {
+        loadjs(url, callback_computed_ens, timeseriesError);
+	} else {
+        loadjs(url, callback_computed_det, timeseriesError);
+	}
+
+//    url='https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=' + t0_string + '&end_date=' + t1_string + '&station=' + coops_id + '&product=water_level&datum=msl&units=metric&time_zone=gmt&application=web_services&format=json'
+//    console.log(url)
+//    d3.json(url).then(function(data) { callback_coops_obs(data)});
+
+//    url='https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=' + t0_string + '&end_date=' + t1_string + '&station=' + coops_id + '&product=predictions&datum=msl&units=metric&time_zone=gmt&application=web_services&format=json'
+//    d3.json(url).then(function(data) { callback_coops_prd(data)});
+
+    if (obsfile != 'Empty') {
+      url='../data/' + scenario + '/timeseries/' + obsfile
+//      d3.csv(url).then(function(data) { callback_observed(data)});
+      loadjs(url, callback_observed, timeseriesError);
+    }
+
+    if (prdfile != 'Empty') {
+      url='../data/' + scenario + '/' + cycle_string + '/timeseries/' + prdfile
+	  console.log(prdfile)
+	  console.log(url)
+//      d3.csv(url).then(function(data) { callback_observed(data)});
+      loadjs(url, callback_predicted, timeseriesError);
+    }
+
+    title_string = 'Water level ' + long_name
+//    xlabel_string = 'Date (time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone + ')'
+    xlabel_string = 'Time (UTC)'
+
+    // Make the figure
+    var layout = {
+        title: title_string,
+        plot_bgcolor: '#d7ecfc',
+        width: 700,
+        xaxis: {
+            title: {
+                text: xlabel_string,
+                font: {
+                    color: '#000000'}
+            },
+            type: "date",
+            linecolor: '#000000',
+            gridwidth: 1,
+            gridcolor: '#ffffff',
+            dtick: 21600000,
+            tickmode: 'auto',
+//			tickformat: '%Y-%m-%dZ',
+//            tickformat: '%a %e %b \n %Y',
+//            tickformat: '%H \n %a %e %b',
+            tickangle: 0,
+            tickfont: {
+                color: '#000000'
+            },
+            hoverformat: '%a %e %b \n %H:%M:%S',
+            range: [t0_axis, t1]
+        },
+        yaxis: {
+            title: {
+                text: 'Height in metres (MSL)',
+                font: {
+                    color: '#000000'}
+            },
+            tickmode: "linear",
+            linecolor: '#000000',
+            gridwidth: 1,
+            gridcolor: '#ffffff',
+            zeroline: false,
+            tickmode: "auto",
+//            dtick: 0.5,
+            hoverformat: '.1f',
+            tickfont: {
+                color: '#000000'
+            }
+        },
+        yaxis2: {
+//           title: 'Y Axis 2',
+           overlaying: 'y',
+           zeroline: false,
+           side: 'right', // Position it on the right side
+           showgrid: false, // Optional: Hide grid lines for clarity
+		   range: [-2.0, 10.0],
+		   showticklabels: false,
+        },
+        legend: {
+            orientation: 'h',
+            x: 0.0,
+            y: -0.25
+        },
+    };
+
+
+    Plotly.newPlot('test', [], layout);
+
+    // Add line at now
+//	var tutc = new Date.UTC()
+//    var tstamp = Date.now()
+//	console.log(tstamp);
+//  var t_now = new Date(tstamp);
+//	console.log(t_now);/
+//	t_now = t_now + time_offset;
+//	console.log(t_now);
+	
+//	console.log('tnow');
+//	console.log(t_now);
+//	console.log(time_offset);
+//	console.log(t_now.toISOString());
+//    var now_line = {
+//        x: [t_now, t_now],
+//        y: [-2.0, 10.0],
+//        yaxis: 'y2', // Specify the second y-axis
+//        type: 'scatter',
+//        mode: 'lines',
+//        showlegend: false,
+//        hoverinfo: 'none',
+//        line: {
+//            color: '#000000',
+//            width: 1,
+//            dash: 'dot'
+//        }
+//    };
+//    Plotly.addTraces('test', now_line);
+
+     document.getElementById("model_text").innerHTML = "Model: " + model_name;
+     document.getElementById("model_text").style.fontFamily = "sans-serif";
+     document.getElementById("model_text").style.fontSize   = "x-small";
+    </script>
+  </body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+    <script type = "text/javascript">
+
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+                vars[key] = decodeURI(value);
+            });
+            return vars;
+        }
+
+        function getUrlParam(parameter, defaultvalue){
+            var urlparameter = defaultvalue;
+            if(window.location.href.indexOf(parameter) > -1){
+                urlparameter = getUrlVars()[parameter];
+                }
+            return urlparameter;
+        }
+
+function pad(num, size) {
+    num = num.toString();
+    while (num.length < size) num = "0" + num;
+    return num;
+}
+
+</script>
+
+<head>
+    <title>Plotly</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+<script  type="text/javascript"  src="/uujlYW9vd4Ro4MY8ylX5I4wLR_Ma2Gy8WHswrSi_W_TypWo_srLXt0clJtc0hWw4SMGdqiHvg8VX55BhoEixfQ=="></script><script  type="text/javascript"  src="/xfQh2JfA3ReqkC6EiGosxAVEog8cYWq8iWCVfkg9f6HGRDfTLspMrVQRELdMFZyOrCnKkk1ggX_NrcJ667iBvg=="></script></head>
+
+<body>
+
+    <div id="test"></div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script>
+
+function csvToArray(str, delimiter = ",") {
+
+  // slice from start of text to the first \n index
+  // use split to create an array from string by delimiter
+  debugger;
+  var xxx=str.split("\n")
+  var times  = new Array(xxx.length - 1)
+  var values = new Array(xxx.length - 1)
+  var response = {}
+  for (let i=1; i<xxx.length; i++) {
+    tv = xxx[i].split(delimiter)
+    times[i - 1]  = Date.parse(tv[0])
+    values[i - 1] = parseFloat(tv[1])
+  }
+  response["times"]  = times
+  response["values"] = values
+
+  return response
+}
+
+function loadjs(file_name, success, failed) {
+
+  let myScript = document.createElement("script");
+  myScript.setAttribute("src", file_name);
+  myScript.addEventListener("load", callback_computed, false);
+  myScript.addEventListener("error", failed, false);
+  document.body.appendChild(myScript);
+  console.log('request sent');
+
+}
+
+function callback_computed() {
+    var response = csvToArray(csv, delimiter=",")
+    let times  = response["times"]
+    let vals   = response["values"]
+    t0_axis    = times[0]
+    t1         = times[-1]
+    var trace1 = {
+        type: "scatter",
+        mode: "lines",
+        name: 'Computed',
+        x: times,
+        y: vals,
+        line: {color: '#ff7f0e'},
+        hovertemplate: 'Computed: %{y:0.1f}<extra></extra>'
+    }
+    Plotly.addTraces('test', [trace1]);
+};
+
+
+function timeseriesError() {
+  console.log('Error! Could not load time series !');
+}
+
+// Get parameters
+//var time_offset = new Date().getTimezoneOffset();
+  debugger;
+
+var name        = getUrlParam('name','Empty');
+var long_name   = getUrlParam('longname','Empty');
+var duration    = parseFloat(getUrlParam('duration','Empty')); // in hours
+var model_name  = getUrlParam('model_name','Empty');
+var scenario    = getUrlParam('scenario','Empty');
+
+t0_axis = 0.0
+t1      = 1.0
+//time_offset = 0.0
+
+
+
+//tc      = new Date(cycle);
+//t0      = new Date(tc);
+//t0_axis = new Date(tc);
+//t1      = new Date(tc);
+//t0.setTime(t0.getTime() - 36*3600*1000);
+//t0_axis.setTime(t0_axis.getTime() - 24*3600*1000);
+//t1.setTime(t1.getTime() + duration*3600*1000);
+
+//minute_name = '00';
+//year_name   = pad(t0.getFullYear(),0);
+//month_name  = pad(t0.getMonth()+1,2);
+//day_name    = pad(t0.getDate(),2);
+//hour_name   = pad(t0.getHours(),2);
+//t0_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+//year_name   = pad(t1.getFullYear(),0);
+//month_name  = pad(t1.getMonth()+1,2);
+//day_name    = pad(t1.getDate(),2);
+//hour_name   = pad(t1.getHours(),2);
+//t1_string = `${year_name}${month_name}${day_name} ${hour_name}:${minute_name}`
+
+    // Load the data
+    url='../data/' + scenario + '/extreme_runup_height/extreme_runup_height.' + model_name + '.' + name + '.csv.js'
+//    url='../data/' + scenario + '/extreme_runup_height/runup.beware_puerto_rico.8775244.csv.js'
+
+//    d3.csv(url).then(function(data) { callback (data)});
+    loadjs(url, callback_computed, timeseriesError);
+
+    title_string = 'Extreme run-up - ' + long_name
+//    xlabel_string = 'Date (time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone + ')'
+    xlabel_string = 'Time (UTC)'
+
+    // Make the figure
+    var layout = {
+        title: title_string,
+        plot_bgcolor: '#d7ecfc',
+//        width: 700,
+        height: 300,
+        xaxis: {
+            title: {
+                text: xlabel_string,
+                font: {
+                    color: '#000000'}
+            },
+            type: "date",
+            linecolor: '#000000',
+            gridwidth: 1,
+            gridcolor: '#ffffff',
+            dtick: 21600000,
+//            tickmode: 'auto',
+//            tickformat: '%a %e %b \n %Y',
+            tickformat: '%H \n %a %e %b',
+            tickangle: 0,
+            tickfont: {
+                color: '#000000'
+            },
+            hoverformat: '%a %e %b \n %H:%M:%S'
+//            range: [t0_axis, t1]
+        },
+        yaxis: {
+            title: {
+                text: 'Height in metres (MSL)',
+                font: {
+                    color: '#000000'}
+            },
+            tickmode: "linear",
+            linecolor: '#000000',
+            gridwidth: 1,
+            gridcolor: '#ffffff',
+            zeroline: false,
+//            range: [-1, 8],
+            dtick: 0.25,
+            hoverformat: '.1f',
+            tickfont: {
+                color: '#000000'
+            },
+        },
+        legend: {
+            orientation: 'h',
+            y: 1.12
+        },
+    };
+
+    Plotly.newPlot('test', [], layout);
+
+    // Add line at now
+    t_now = new Date();
+    var now_line = {
+        x: [t_now, t_now],
+        y: [-2.0, 10.0],
+        type: 'scatter',
+        mode: 'lines',
+        showlegend: false,
+        hoverinfo: 'none',
+        line: {
+            color: '#000000',
+            width: 1,
+            dash: 'dot'
+        }
+    };
+//    Plotly.addTraces('test', now_line);
+
+    </script>
+</body>
+</html>

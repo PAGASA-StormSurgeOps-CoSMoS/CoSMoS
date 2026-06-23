@@ -1,0 +1,154 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+}
+
+.html {
+  font-family: sans-serif;
+  font-size: 11px;
+}
+
+.flex-container {
+  margin-left:20px;
+  width: calc(100% - 20px);
+  max-width: calc(100% - 20px);
+  height: 100%;
+}
+
+.map-container {
+  display: flex;
+  width: 100%;
+  height: calc(100% - 70px);
+  flex-direction: row;
+  position: relative;
+}
+
+#map {
+  height: 100%;
+  display: flex;
+  flex: 1 1 80%;
+}
+
+.map-control {
+  display: block;
+  flex: 0 0 350px;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#deltares_logo {
+  position: absolute;
+  bottom: 40px;
+  left: 5px;
+  width: 150px;
+  height: 50px;
+  z-index: 400;
+  pointer-events: none;
+}
+
+#pagasa_logo {
+  position: absolute;
+  bottom: 100px;
+  left: 10px;
+  width: 100px;
+  height: 100px;
+  z-index: 400;
+  pointer-events: none;
+}
+
+#description_text {
+  width: 320px;
+  font-size: 15px;
+  border-style: none;
+}
+
+.timeselector {
+  font-size: 11px;
+}
+
+.info {
+  width: 120px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.8);
+  /* box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); */
+  /* border-radius: 5px; */
+}
+
+.info h4 {
+  margin: 0 0 5px;
+  color: #777;
+}
+
+legend {
+  font-weight: bold;
+}
+
+.legend {
+  font-size: 0.825rem;
+  line-height: 18px;
+}
+
+.cvi-legend {
+  font-size: 0.825rem;
+}
+
+.legend i {
+  width: 20px;
+  height: 15px;
+  float: left;
+  margin-right: 8px;
+  opacity: 0.7;
+  border-style: solid;
+  border-width: 1px;
+}
+
+.island_marker {
+  border: none;
+  border-radius: 5px;
+  border-top-left-radius: 0px;
+  background-color: rgba(0, 0, 255, 0.7);
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  color: white;
+  text-align: center;
+  display:block;
+}
+
+.island_marker::before {
+  /* content: ""; */
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 0px;
+  height: 0px;
+  border-style: solid;
+  border-width: 6px 6px 0 0;
+  display: block;
+  background-color: rgba(0, 0, 255, 0.7);
+}
+.island-div-icon {
+  border: 0px;
+}
+
+/* Leaflet crispness override */
+.leaflet-container .leaflet-overlay-pane svg,
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer {
+  max-width: none !important;
+  /* Preserve crisp pixels with scaled up images */
+  image-rendering: optimizeSpeed;             /* Legal fallback */
+  image-rendering: -moz-crisp-edges;          /* Firefox        */
+  image-rendering: -o-crisp-edges;            /* Opera          */
+  image-rendering: -webkit-optimize-contrast; /* Safari         */
+  image-rendering: optimize-contrast;         /* CSS3 Proposed  */
+  image-rendering: crisp-edges;               /* CSS4 Proposed  */
+  image-rendering: pixelated;                 /* CSS4 Proposed  */
+  -ms-interpolation-mode: nearest-neighbor;   /* IE8+           */
+}
