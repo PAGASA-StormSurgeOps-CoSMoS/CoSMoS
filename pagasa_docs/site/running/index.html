@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Running & verifying - CoSMoS - PAGASA Operational Notes</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Running \u0026 verifying";
+        var mkdocs_page_input_path = "running.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> CoSMoS - PAGASA Operational Notes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Track-less ensembles</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../trackless-ensemble/">Overview & behaviour</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../change-reference/">Change reference</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Running & verifying</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#required-data-layout">Required data layout</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#what-to-look-for-in-cosmoslog">What to look for in cosmos.log</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#quick-checklist-after-pre-processing">Quick checklist after pre-processing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#caveats">Caveats</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">CoSMoS - PAGASA Operational Notes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Track-less ensembles</li>
+      <li class="breadcrumb-item active">Running & verifying</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="running-verifying">Running &amp; verifying<a class="headerlink" href="#running-verifying" title="Permanent link">&para;</a></h1>
+<h2 id="required-data-layout">Required data layout<a class="headerlink" href="#required-data-layout" title="Permanent link">&para;</a></h2>
+<p>Stage the ensemble data in the meteo database exactly as before, minus the
+<code>.cyc</code> files (or with empty ones — both work):</p>
+<pre><code class="language-text">&lt;meteo_db&gt;/&lt;dataset&gt;/&lt;YYYYMMDD_HHz&gt;/
+    &lt;member_01&gt;/
+        &lt;member_01&gt;.20260706_0000.nc
+        &lt;member_01&gt;.20260706_0600.nc
+        ...
+    &lt;member_02&gt;/
+        ...
+</code></pre>
+<p>Requirements:</p>
+<ul>
+<li>The scenario must have <code>run_ensemble = true</code> and point <code>meteo_dataset</code> at
+  this dataset.</li>
+<li>Member folder names must prefix their <code>.nc</code> files (<code>&lt;member&gt;*.nc</code>) — that
+  prefix is now the detection signature when no <code>.cyc</code> is present.</li>
+<li><code>config.run.event_mode</code> must be <code>"meteo"</code> (the default storm/weather flow).</li>
+<li>Per-member data is assumed pre-staged: <code>download_meteo()</code> skips per-member
+  datasets, unchanged.</li>
+</ul>
+<p>Then run as usual:</p>
+<pre><code class="language-powershell">python -m cosmos run &lt;scenario_name&gt; --path &lt;run_folder&gt; --cycle &lt;YYYYMMDD_HHz&gt;
+</code></pre>
+<h2 id="what-to-look-for-in-cosmoslog">What to look for in <code>cosmos.log</code><a class="headerlink" href="#what-to-look-for-in-cosmoslog" title="Permanent link">&para;</a></h2>
+<p>A healthy track-less run logs, in order:</p>
+<pre><code class="language-text">Per-member meteo ensemble detected WITHOUT track (gridded forcing only): N members (...); deterministic = &lt;member&gt;
+Collecting meteo data (per-member, deterministic=&lt;member&gt;) : &lt;dataset&gt;
+No (usable) deterministic track file found: &lt;path&gt;/&lt;member&gt;.cyc
+Per-member ensemble will run on gridded forcing only (no spiderwebs, no track cone).
+Setting up per-member meteo ensemble without cyclone track (N members) ...
+Meteo ensemble (no track) done ...
+</code></pre>
+<p>If the deterministic <code>.cyc</code> exists but is empty or broken you will instead see
+one of:</p>
+<pre><code class="language-text">Deterministic track file &lt;path&gt; has fewer than 3 track points — ignoring track.
+Could not read deterministic track file &lt;path&gt; (&lt;error&gt;) — ignoring track.
+</code></pre>
+<p>followed by the same "gridded forcing only" lines.</p>
+<p>During pre-processing, each ensemble model logs one line per member as its
+forcing cut-out is written:</p>
+<pre><code class="language-text">  meteo forcing files for ensemble member &lt;member&gt; ...
+</code></pre>
+<h2 id="quick-checklist-after-pre-processing">Quick checklist after pre-processing<a class="headerlink" href="#quick-checklist-after-pre-processing" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Each <code>_ensemble</code> model's job folder contains one subfolder per member with
+  <code>sfincs_wind.nc</code> (or <code>hurrywave_wind.nc</code>, <code>amu</code>/<code>amv</code>/<code>amp</code>) inside.</li>
+<li><strong>No</strong> <code>sfincs.spw</code> / <code>hurrywave.spw</code> in the member folders, and no
+  <code>spwfile</code> line in <code>sfincs.inp</code> / <code>hurrywave.inp</code>.</li>
+<li><code>&lt;cycle&gt;/track/</code> in the scenario cycle folder is absent or empty (no
+  <code>storm.spw</code> / <code>storm.cyc</code>).</li>
+<li>The web viewer builds without a track or cone overlay.</li>
+</ul>
+<h2 id="caveats">Caveats<a class="headerlink" href="#caveats" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Mixed tracks</p>
+<p>If the <strong>deterministic</strong> (last-sorted) member has a usable track but other
+members do not, the run uses the normal spiderweb flow and the track-less
+members are skipped during spiderweb generation with a warning. Those
+member simulations will then fail, because the shared model input declares
+a <code>spwfile</code> the member folder does not have. Keep tracks all-or-nothing
+per cycle, or ask for the per-member fallback to be implemented.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Cloud run mode</p>
+<p><code>run_sfincs.py</code> / <code>run_hurrywave.py</code> unconditionally download the member
+spiderweb from S3 when <code>run_mode = "cloud"</code> and the model is an ensemble
+member. Track-less ensembles have no spiderwebs on S3, so <strong>cloud mode is
+not yet supported for track-less runs</strong>. Local <code>serial</code> / <code>parallel</code>
+modes are fine.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Deterministic models</p>
+<p>Deterministic (non-ensemble) models are unaffected: they are forced by
+the deterministic member's gridded data, which is still collected before
+the track check. They previously also received <code>storm.spw</code> on top of the
+gridded forcing; in track-less runs that extra spiderweb layer simply does
+not exist.</p>
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../change-reference/" class="btn btn-neutral float-left" title="Change reference"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../change-reference/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Change reference - CoSMoS - PAGASA Operational Notes</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Change reference";
+        var mkdocs_page_input_path = "change-reference.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> CoSMoS - PAGASA Operational Notes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Track-less ensembles</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../trackless-ensemble/">Overview & behaviour</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Change reference</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#scenariopy">scenario.py</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#meteopy">meteo.py</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#main_looppy">main_loop.py</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#track_ensemblepy">track_ensemble.py</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sfincspy-hurrywavepy">sfincs.py / hurrywave.py</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modelpy">model.py</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#what-was-deliberately-not-changed">What was deliberately not changed</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../running/">Running & verifying</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">CoSMoS - PAGASA Operational Notes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Track-less ensembles</li>
+      <li class="breadcrumb-item active">Change reference</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="change-reference">Change reference<a class="headerlink" href="#change-reference" title="Permanent link">&para;</a></h1>
+<p>File-by-file description of the July 2026 track-less ensemble change. All
+paths are relative to <code>CoSMoS/src/cosmos/</code>.</p>
+<h2 id="scenariopy"><code>scenario.py</code><a class="headerlink" href="#scenariopy" title="Permanent link">&para;</a></h2>
+<p><strong><code>Scenario.__init__</code></strong> — new attribute:</p>
+<pre><code class="language-python">self.meteo_ensemble_has_track = False
+</code></pre>
+<p><code>True</code> only when the deterministic member has a usable (non-empty) <code>.cyc</code>
+file. When <code>False</code>, the per-member ensemble runs on gridded forcing only.</p>
+<p><strong><code>Scenario.detect_meteo_ensemble_mode()</code></strong> — two changes:</p>
+<ol>
+<li>
+<p>A subfolder now qualifies as an ensemble member when it contains
+   <code>&lt;member&gt;.cyc</code> <strong>or</strong> gridded <code>&lt;member&gt;*.nc</code> files (previously <code>.cyc</code> was
+   mandatory, so track-less datasets were never detected):</p>
+<p><code>python
+if os.path.exists(os.path.join(sub, entry + ".cyc")):
+    members.append(entry)
+elif glob.glob(os.path.join(sub, entry + "*.nc")):
+    members.append(entry)</code></p>
+</li>
+<li>
+<p>After the member list is built, the deterministic member's <code>.cyc</code> is
+   checked (<code>exists</code> <strong>and</strong> <code>size &gt; 0</code>) to set <code>meteo_ensemble_has_track</code>.
+   The detection log line now says <code>with track</code> or
+   <code>WITHOUT track (gridded forcing only)</code>.</p>
+</li>
+</ol>
+<h2 id="meteopy"><code>meteo.py</code><a class="headerlink" href="#meteopy" title="Permanent link">&para;</a></h2>
+<p><strong><code>_collect_meteo_ensemble_deterministic()</code></strong> — the hard failure was replaced
+by a graceful fallback. Previously:</p>
+<pre><code class="language-python">if not os.path.exists(cyc_file):
+    cosmos.stop(f&quot;Deterministic track file not found: {cyc_file}&quot;)
+tc = TropicalCyclone(track_file=cyc_file, name=member)
+</code></pre>
+<p>Now the track is loaded only when the file exists and is non-empty, inside a
+<code>try/except</code>, and is additionally rejected when it has fewer than 3 track
+points (the minimum <code>setup_track_ensemble()</code> accepts). On any of those
+conditions the function logs the reason, sets
+<code>cosmos.scenario.meteo_ensemble_has_track = False</code> and
+<code>cosmos.tropical_cyclone = None</code>, and returns <strong>after</strong> the gridded data has
+already been collected — so deterministic models still get their meteo
+forcing. No <code>storm.spw</code> / <code>storm.cyc</code> / <code>track.geojson.js</code> are written.</p>
+<h2 id="main_looppy"><code>main_loop.py</code><a class="headerlink" href="#main_looppy" title="Permanent link">&para;</a></h2>
+<p>The ensemble gate gained an <code>elif</code> branch:</p>
+<pre><code class="language-python">if cosmos.scenario.run_ensemble and cosmos.tropical_cyclone:
+    # Make track ensemble (this also add 'new' ensemble models that fall within the cone)
+    setup_track_ensemble()
+elif cosmos.scenario.run_ensemble and cosmos.scenario.meteo_ensemble_mode:
+    # Per-member gridded ensemble without a usable track (.cyc
+    # missing or empty): no spiderwebs, no cone. Ensemble copies
+    # are made for all qualifying models and each member is
+    # forced with its own gridded amu/amv.
+    setup_meteo_ensemble_without_track()
+</code></pre>
+<h2 id="track_ensemblepy"><code>track_ensemble.py</code><a class="headerlink" href="#track_ensemblepy" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p><strong>New public function <code>setup_meteo_ensemble_without_track()</code></strong> — the
+  track-less counterpart of <code>setup_track_ensemble()</code>. Skips
+  <code>TropicalCycloneEnsemble</code>, spiderweb generation, and the cone; only creates
+  the <code>_ensemble</code> model copies. <code>ensemble_names</code> and
+  <code>track_ensemble_nr_realizations</code> were already set by
+  <code>detect_meteo_ensemble_mode()</code>.</p>
+</li>
+<li>
+<p><strong>New helper <code>_add_ensemble_model_copies(cone)</code></strong> — the model-copy block was
+  extracted from <code>setup_track_ensemble()</code> so both entry points share it. With
+  a cone gdf, only models whose exterior intersects the cone qualify
+  (unchanged behaviour); with <code>cone=None</code> every non-tide-only model of an
+  ensemble type qualifies. Nesting renames (<code>*_ensemble</code> suffixes),
+  <code>deterministic_name</code>, <code>get_nested_models()</code>, and <code>set_paths()</code> are identical
+  to before.</p>
+</li>
+<li>
+<p><strong><code>_generate_per_member_ensemble()</code></strong> (the <em>with-track</em> per-member flow) is
+  now robust to individual members with a missing or empty <code>.cyc</code>: they are
+  skipped during both the <code>.cyc</code> staging step and the per-member spiderweb
+  loop, with a warning logged.</p>
+</li>
+</ul>
+<h2 id="sfincspy-hurrywavepy"><code>sfincs.py</code> / <code>hurrywave.py</code><a class="headerlink" href="#sfincspy-hurrywavepy" title="Permanent link">&para;</a></h2>
+<p>The ensemble spiderweb declaration is now conditional on a spiderweb actually
+existing (in track-less runs <code>cosmos.scenario.meteo_spiderweb</code> stays <code>None</code>):</p>
+<pre><code class="language-python"># sfincs.py — was: if self.ensemble:
+if self.ensemble and self.meteo_spiderweb:
+    self.domain.config.set(&quot;spwfile&quot;, &quot;sfincs.spw&quot;)
+    ...
+</code></pre>
+<pre><code class="language-python"># hurrywave.py — was: if self.ensemble:
+if self.ensemble and self.meteo_spiderweb:
+    self.domain.config.set(&quot;spwfile&quot;, &quot;hurrywave.spw&quot;)
+</code></pre>
+<p>Without this, the model binaries would abort looking for a nonexistent
+<code>sfincs.spw</code> / <code>hurrywave.spw</code> in each member folder.</p>
+<h2 id="modelpy"><code>model.py</code><a class="headerlink" href="#modelpy" title="Permanent link">&para;</a></h2>
+<p><strong><code>Model.write_meteo_input_files()</code></strong> — in the per-member loop, the step that
+copies <code>ensemble_&lt;member&gt;.spw</code> into the member's job subfolder is skipped
+entirely when <code>meteo_ensemble_has_track</code> is <code>False</code>, instead of emitting a
+"spw not found" warning for every member of every model.</p>
+<h2 id="what-was-deliberately-not-changed">What was deliberately <em>not</em> changed<a class="headerlink" href="#what-was-deliberately-not-changed" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>webviewer.py</code> — already guarded with
+  <code>if cosmos.tropical_cyclone is not None</code> and
+  <code>if cosmos.scenario.track_ensemble</code>; track/cone overlays are simply omitted.</li>
+<li>The S3 spiderweb upload in <code>main_loop.py</code> — already gated on
+  <code>cosmos.tropical_cyclone</code>.</li>
+<li><code>run_sfincs.py</code> / <code>run_hurrywave.py</code> <strong>cloud-mode</strong> spiderweb download — see
+  the caveat on the <a href="../running/">Running &amp; verifying</a> page.</li>
+<li><code>config["spw_path"]</code> in <code>Model.write_config_yml()</code> — still written for
+  ensemble models; harmless (local runners do not read it).</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../trackless-ensemble/" class="btn btn-neutral float-left" title="Overview & behaviour"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../running/" class="btn btn-neutral float-right" title="Running & verifying">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../trackless-ensemble/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../running/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

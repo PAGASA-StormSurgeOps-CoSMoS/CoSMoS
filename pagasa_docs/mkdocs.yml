@@ -1,0 +1,17 @@
+site_name: CoSMoS - PAGASA Operational Notes
+site_description: >-
+  Documentation of PAGASA-specific changes to CoSMoS, starting with
+  track-less per-member meteo ensembles (running without a .cyc file).
+theme:
+  name: readthedocs
+nav:
+  - Home: index.md
+  - Track-less ensembles:
+      - Overview & behaviour: trackless-ensemble.md
+      - Change reference: change-reference.md
+      - Running & verifying: running.md
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - tables
