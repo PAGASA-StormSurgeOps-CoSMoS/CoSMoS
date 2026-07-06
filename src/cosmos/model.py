@@ -1167,14 +1167,16 @@ class Model:
                 fo.mkdir(member_path)
                 _emit_for(member_path)
                 # Copy this member's spw into its subfolder as <prefix>.spw
-                # (the name the model binary expects).
-                spw_src = os.path.join(spw_src_dir, "ensemble_" + member + ".spw")
-                if os.path.exists(spw_src):
-                    fo.copy_file(spw_src, os.path.join(member_path, prefix + ".spw"))
-                else:
-                    cosmos.log(
-                        f"  warning: ensemble spw not found for member {member}: {spw_src}"
-                    )
+                # (the name the model binary expects). Track-less runs have
+                # no spws — members are forced with gridded data only.
+                if cosmos.scenario.meteo_ensemble_has_track:
+                    spw_src = os.path.join(spw_src_dir, "ensemble_" + member + ".spw")
+                    if os.path.exists(spw_src):
+                        fo.copy_file(spw_src, os.path.join(member_path, prefix + ".spw"))
+                    else:
+                        cosmos.log(
+                            f"  warning: ensemble spw not found for member {member}: {spw_src}"
+                        )
         else:
             _emit_for(path)
 

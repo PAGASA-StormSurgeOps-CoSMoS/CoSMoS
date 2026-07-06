@@ -71,13 +71,40 @@ def _collect_meteo_ensemble_deterministic() -> None:
     else:
         cosmos.scenario.meteo_string = meteo_dataset.name
 
-    # Load the last member's .cyc as the deterministic tc.
+    # Load the last member's .cyc as the deterministic tc. The track is
+    # optional: when the file is missing, empty, or unparseable, the run
+    # continues on gridded forcing only — no spiderweb, no cone. Ensemble
+    # model copies are then made by setup_meteo_ensemble_without_track().
     cyc_file = os.path.join(
         meteo_dataset.path, cosmos.cycle_string, member, f"{member}.cyc"
     )
-    if not os.path.exists(cyc_file):
-        cosmos.stop(f"Deterministic track file not found: {cyc_file}")
-    tc = TropicalCyclone(track_file=cyc_file, name=member)
+    tc = None
+    if os.path.exists(cyc_file) and os.path.getsize(cyc_file) > 0:
+        try:
+            tc = TropicalCyclone(track_file=cyc_file, name=member)
+            if len(tc.track.gdf) < 3:
+                cosmos.log(
+                    f"Deterministic track file {cyc_file} has fewer than "
+                    f"3 track points — ignoring track."
+                )
+                tc = None
+        except Exception as e:
+            cosmos.log(
+                f"Could not read deterministic track file {cyc_file} "
+                f"({e}) — ignoring track."
+            )
+            tc = None
+    else:
+        cosmos.log(f"No (usable) deterministic track file found: {cyc_file}")
+
+    if tc is None:
+        cosmos.log(
+            "Per-member ensemble will run on gridded forcing only "
+            "(no spiderwebs, no track cone)."
+        )
+        cosmos.scenario.meteo_ensemble_has_track = False
+        cosmos.tropical_cyclone = None
+        return
 
     # Per-member ensembles always derive the spw from the gridded data —
     # this is the whole point. (Equivalent to spw_wind_field == "meteo_data".)

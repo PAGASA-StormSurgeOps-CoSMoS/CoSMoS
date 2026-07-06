@@ -68,10 +68,18 @@ def _generate_per_member_ensemble(tc, track_path, spw_path, tstart, tend, dt) ->
     src_root = os.path.join(meteo_dataset.path, cosmos.cycle_string)
 
     # 1. Stage member .cyc files under the underscore-prefixed name.
+    # Members with a missing or empty .cyc are skipped: they get no
+    # spiderweb and are forced with their gridded data only.
     fo.mkdir(track_path)
     fo.mkdir(spw_path)
     for member in members:
         src = os.path.join(src_root, member, member + ".cyc")
+        if not os.path.exists(src) or os.path.getsize(src) == 0:
+            cosmos.log(
+                f"  warning: no usable track for ensemble member {member} "
+                f"— skipping its spiderweb (gridded forcing only)."
+            )
+            continue
         dst = os.path.join(track_path, "ensemble_" + member + ".cyc")
         fo.copy_file(src, dst)
 
@@ -103,13 +111,16 @@ def _generate_per_member_ensemble(tc, track_path, spw_path, tstart, tend, dt) ->
     # 3. Overwrite each parametric spw with one derived from THAT member's
     # gridded wind field.
     for member in members:
+        cyc_file = os.path.join(src_root, member, member + ".cyc")
+        if not os.path.exists(cyc_file) or os.path.getsize(cyc_file) == 0:
+            # No usable track for this member (warned in step 1).
+            continue
         cosmos.log(f"Computing gridded spw for ensemble member {member} ...")
         meteo_dataset.collect(
             [tstart, tend],
             last_cycle=cosmos.cycle if cosmos.config.run.collect_meteo_up_to_cycle else None,
             subfolder=member,
         )
-        cyc_file = os.path.join(src_root, member, member + ".cyc")
         m_tc = TropicalCyclone(track_file=cyc_file, name=member)
         m_tc.track.resample(1, method="spline")
         if len(meteo_dataset.subset) > 0:
@@ -244,53 +255,7 @@ def setup_track_ensemble() -> None:
 
     cone = _write_cone_and_tracks(cosmos.scenario.track_ensemble)
 
-    # Loop through all models and check if they fall within cone
-    models_to_add = []
-    for model in cosmos.scenario.model:
-        # First check if this type of model should be run in ensemble mode
-        if model.type not in cosmos.scenario.ensemble_models:
-            # Not an ensemble model
-            continue
-        if model.exterior is None:
-            # No outline defined
-            continue
-        if model.role == "tide_only":
-            # Tide only model
-            continue
-        if shapely.intersects(
-            cone.loc[0]["geometry"], model.exterior.loc[0]["geometry"]
-        ):
-            # Add model
-            # Make a shallow copy of the model
-            ensemble_model = copy.copy(model)
-            # Change name and long name
-            ensemble_model.name = model.name + "_ensemble"
-            ensemble_model.long_name = model.long_name + " (ensemble)"
-            # Re-initialize the model domain
-            ensemble_model.read_model_specific()
-            # Set ensemble flag
-            ensemble_model.ensemble = True
-            # Set name of matching deterministic model
-            ensemble_model.deterministic_name = model.name
-            # Change nesting (new nested models will be set later in this function)
-            ensemble_model.nested_flow_models = []
-            ensemble_model.nested_wave_models = []
-            if ensemble_model.flow_nested_name:
-                ensemble_model.flow_nested_name += "_ensemble"
-            if ensemble_model.wave_nested_name:
-                ensemble_model.wave_nested_name += "_ensemble"
-            if ensemble_model.bw_nested_name:
-                ensemble_model.bw_nested_name += "_ensemble"
-            # Add to list of models to add
-            models_to_add.append(ensemble_model)
-
-    cosmos.scenario.model = cosmos.scenario.model + models_to_add
-
-    for model in models_to_add:
-        # Get nested models for ensemble models
-        model.get_nested_models()
-        # Set and make paths for ensemble models
-        model.set_paths()
+    _add_ensemble_model_copies(cone)
 
     # if cosmos.config.run.only_run_ensemble:
     #     # Remove all models that are not ensembles
@@ -305,3 +270,79 @@ def setup_track_ensemble() -> None:
             cosmos.scenario.ensemble_names.append(str(iens).zfill(5))
 
     cosmos.log("Track ensemble done ...")
+
+
+def setup_meteo_ensemble_without_track() -> None:
+    """Set up a per-member meteo ensemble that has no usable cyclone track.
+
+    Used when ``scenario.detect_meteo_ensemble_mode`` found per-member
+    subfolders but the deterministic member's ``.cyc`` is missing or empty
+    (``meteo_ensemble_has_track == False``). There is nothing to build a
+    spiderweb or a cone from, so every non-tide-only model of an ensemble
+    type gets an ensemble copy; each member is forced purely with its own
+    gridded data (the per-member loop in ``Model.write_meteo_input_files``).
+    """
+    cosmos.log(
+        "Setting up per-member meteo ensemble without cyclone track "
+        f"({len(cosmos.scenario.ensemble_names)} members) ..."
+    )
+    _add_ensemble_model_copies(cone=None)
+    cosmos.log("Meteo ensemble (no track) done ...")
+
+
+def _add_ensemble_model_copies(cone) -> None:
+    """Create ``*_ensemble`` copies of qualifying models.
+
+    With a cone gdf, only models whose exterior intersects the cone qualify
+    (track-ensemble flow). With ``cone=None`` (track-less per-member meteo
+    ensemble) every non-tide-only model of an ensemble type qualifies.
+    """
+    models_to_add = []
+    for model in cosmos.scenario.model:
+        # First check if this type of model should be run in ensemble mode
+        if model.type not in cosmos.scenario.ensemble_models:
+            # Not an ensemble model
+            continue
+        if model.role == "tide_only":
+            # Tide only model
+            continue
+        if cone is not None:
+            if model.exterior is None:
+                # No outline defined
+                continue
+            if not shapely.intersects(
+                cone.loc[0]["geometry"], model.exterior.loc[0]["geometry"]
+            ):
+                # Model does not fall within cone
+                continue
+        # Add model
+        # Make a shallow copy of the model
+        ensemble_model = copy.copy(model)
+        # Change name and long name
+        ensemble_model.name = model.name + "_ensemble"
+        ensemble_model.long_name = model.long_name + " (ensemble)"
+        # Re-initialize the model domain
+        ensemble_model.read_model_specific()
+        # Set ensemble flag
+        ensemble_model.ensemble = True
+        # Set name of matching deterministic model
+        ensemble_model.deterministic_name = model.name
+        # Change nesting (new nested models will be set later in this function)
+        ensemble_model.nested_flow_models = []
+        ensemble_model.nested_wave_models = []
+        if ensemble_model.flow_nested_name:
+            ensemble_model.flow_nested_name += "_ensemble"
+        if ensemble_model.wave_nested_name:
+            ensemble_model.wave_nested_name += "_ensemble"
+        if ensemble_model.bw_nested_name:
+            ensemble_model.bw_nested_name += "_ensemble"
+        # Add to list of models to add
+        models_to_add.append(ensemble_model)
+
+    cosmos.scenario.model = cosmos.scenario.model + models_to_add
+
+    for model in models_to_add:
+        # Get nested models for ensemble models
+        model.get_nested_models()
+        # Set and make paths for ensemble models
+        model.set_paths()

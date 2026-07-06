@@ -431,7 +431,7 @@ class Scenario:
             # signature that distinguishes it from any other stray directory.
             if os.path.exists(os.path.join(sub, entry + ".cyc")):
                 members.append(entry)
-
+    
         if not members:
             return
 

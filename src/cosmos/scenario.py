@@ -4,6 +4,7 @@ Reads scenario TOML files and sets up the collection of nested models,
 clusters, and timing parameters that define a forecast scenario.
 """
 
+import glob
 import os
 
 import toml
@@ -74,6 +75,10 @@ class Scenario:
         self.meteo_ensemble_mode = False
         self.ensemble_names = []
         self.meteo_ensemble_deterministic = None  # last-sorted member name
+        # True when the deterministic member has a usable (non-empty) .cyc
+        # track file. When False, the per-member ensemble runs on gridded
+        # forcing only: no spiderwebs, no cone.
+        self.meteo_ensemble_has_track = False
 
     def read(self) -> None:
         """Read scenario file, set model paths and settings, initialize models and read model generic and model specific data."""
@@ -399,7 +404,7 @@ class Scenario:
 
         Layout we accept:
             <meteo_db>/<dataset>/<cycle>/<member>/
-                <member>.cyc                    # member's track
+                <member>.cyc                    # member's track (optional)
                 <member>.YYYYMMDD_HHMM.nc ...   # member's gridded forcing
 
         When present, set ``self.meteo_ensemble_mode = True``, populate
@@ -407,11 +412,17 @@ class Scenario:
         last one as the deterministic best track. Otherwise leaves the flag
         ``False`` so the existing flat-layout flow is used.
 
+        The ``<member>.cyc`` track is optional: when the deterministic
+        member's .cyc is missing or empty, ``meteo_ensemble_has_track`` is
+        left False and the run is forced with gridded data only (no
+        spiderwebs, no cone).
+
         Called from main_loop after cycle + meteo_database are known.
         """
         self.meteo_ensemble_mode = False
         self.ensemble_names = []
         self.meteo_ensemble_deterministic = None
+        self.meteo_ensemble_has_track = False
 
         if not self.run_ensemble or not self.meteo_dataset:
             return
@@ -421,15 +432,19 @@ class Scenario:
         cycle_folder = os.path.join(ds.path, cosmos.cycle_string)
         if not os.path.isdir(cycle_folder):
             return
-
+        
         members = []
         for entry in sorted(os.listdir(cycle_folder)):
             sub = os.path.join(cycle_folder, entry)
+            print (sub)
             if not os.path.isdir(sub):
                 continue
-            # A member subfolder must contain <member>.cyc — that's the
-            # signature that distinguishes it from any other stray directory.
+            # A member subfolder must contain <member>.cyc or gridded
+            # <member>*.nc files — that's the signature that distinguishes
+            # it from any other stray directory.
             if os.path.exists(os.path.join(sub, entry + ".cyc")):
+                members.append(entry)
+            elif glob.glob(os.path.join(sub, "*.nc")):
                 members.append(entry)
 
         if not members:
@@ -439,7 +454,21 @@ class Scenario:
         self.ensemble_names = members
         self.meteo_ensemble_deterministic = members[-1]
         self.track_ensemble_nr_realizations = len(members)
+
+        # The track is optional: usable only when the deterministic member's
+        # .cyc exists AND is non-empty. (collect_meteo may still downgrade
+        # this to False if the file turns out to be unparseable.)
+        det_cyc = os.path.join(
+            cycle_folder, members[-1], members[-1] + ".cyc"
+        )
+        self.meteo_ensemble_has_track = (
+            os.path.exists(det_cyc) and os.path.getsize(det_cyc) > 0
+        )
+
+        track_str = (
+            "with track" if self.meteo_ensemble_has_track else "WITHOUT track (gridded forcing only)"
+        )
         cosmos.log(
-            f"Per-member meteo ensemble detected: {len(members)} members "
+            f"Per-member meteo ensemble detected {track_str}: {len(members)} members "
             f"({', '.join(members)}); deterministic = {members[-1]}"
         )

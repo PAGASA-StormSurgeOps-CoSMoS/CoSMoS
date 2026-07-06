@@ -346,8 +346,10 @@ class CoSMoS_SFINCS(Model):
             else:
                 self.domain.config.set("usespwprecip", 0)
 
-        if self.ensemble:
-            # Use spiderweb from ensemble
+        if self.ensemble and self.meteo_spiderweb:
+            # Use spiderweb from ensemble. In track-less per-member runs
+            # (meteo_spiderweb is None) there are no spws — members are
+            # forced with gridded data only.
             self.domain.config.set("spwfile", "sfincs.spw")
             if self.crs.is_projected:
                 self.domain.config.set("utmzone", self.crs.utm_zone)

@@ -140,8 +140,10 @@ class CoSMoS_HurryWave(Model):
                 )
             fo.copy_file(spwfile, os.path.join(self.job_path, "hurrywave.spw"))
 
-        if self.ensemble:
-            # Copy all spiderwebs to jobs folder
+        if self.ensemble and self.meteo_spiderweb:
+            # Use spiderweb from ensemble. In track-less per-member runs
+            # (meteo_spiderweb is None) there are no spws — members are
+            # forced with gridded data only.
             self.domain.config.set("spwfile", "hurrywave.spw")
 
         # Make observation points.

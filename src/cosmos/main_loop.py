@@ -22,7 +22,7 @@ from .custom_processing import (
 )
 from .meteo import collect_meteo, download_meteo
 from .scenario import Scenario
-from .track_ensemble import setup_track_ensemble
+from .track_ensemble import setup_meteo_ensemble_without_track, setup_track_ensemble
 from .webviewer import WebViewer
 
 try:
@@ -334,6 +334,12 @@ class MainLoop:
             if cosmos.scenario.run_ensemble and cosmos.tropical_cyclone:
                 # Make track ensemble (this also add 'new' ensemble models that fall within the cone)
                 setup_track_ensemble()
+            elif cosmos.scenario.run_ensemble and cosmos.scenario.meteo_ensemble_mode:
+                # Per-member gridded ensemble without a usable track (.cyc
+                # missing or empty): no spiderwebs, no cone. Ensemble copies
+                # are made for all qualifying models and each member is
+                # forced with its own gridded amu/amv.
+                setup_meteo_ensemble_without_track()
             # elif cosmos.scenario.meteo_spiderweb or not os.path.isabs(cosmos.scenario.meteo_track):
             #     # Make spiderweb if does not exist yet
             #     track_to_spw()
