@@ -6,6 +6,7 @@ clusters, and timing parameters that define a forecast scenario.
 
 import glob
 import os
+import re
 
 import toml
 
@@ -433,10 +434,17 @@ class Scenario:
         if not os.path.isdir(cycle_folder):
             return
         
+        def _natural_key(name):
+            # Split into digit / non-digit runs so numeric chunks sort by value
+            # ("2" before "10") instead of lexically ("10" before "2").
+            return [
+                int(part) if part.isdigit() else part.lower()
+                for part in re.split(r"(\d+)", name)
+            ]
+
         members = []
-        for entry in sorted(os.listdir(cycle_folder)):
+        for entry in sorted(os.listdir(cycle_folder), key=_natural_key):
             sub = os.path.join(cycle_folder, entry)
-            print (sub)
             if not os.path.isdir(sub):
                 continue
             # A member subfolder must contain <member>.cyc or gridded
