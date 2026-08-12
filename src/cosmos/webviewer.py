@@ -381,6 +381,23 @@ class WebViewer:
 
         cosmos.log("Making meteo map tiles ...")
 
+        ### rsderamos- put this first to always make track even if wind failed to generate 
+        # Would be neater to write folloing two files as geojson first and then write them as js here
+        if cosmos.tropical_cyclone is not None:
+            # Copy track geojson to cycle folder
+            jsfile = os.path.join(
+                cosmos.scenario.cycle_track_spw_path, "track.geojson.js"
+            )
+            fo.copy_file(jsfile, self.cycle_path)
+
+        if cosmos.scenario.track_ensemble:
+            # Copy ensemble tracks
+            jsfile = os.path.join(
+                cosmos.scenario.cycle_track_ensemble_path,
+                "track_ensemble.geojson.js",
+            )
+            fo.copy_file(jsfile, self.cycle_path)
+
         try:
             # Wind
             # Name of meteo dataset in scenario file (this one will be used for the wind map)
@@ -478,23 +495,6 @@ class WebViewer:
             dct["legend"] = lgn
 
             self.map_variables.append(dct)
-
-            # Would be neater to write folloing two files as geojson first and then write them as js here
-            if cosmos.tropical_cyclone is not None:
-                # Copy track geojson to cycle folder
-                jsfile = os.path.join(
-                    cosmos.scenario.cycle_track_spw_path, "track.geojson.js"
-                )
-                fo.copy_file(jsfile, self.cycle_path)
-
-            if cosmos.scenario.track_ensemble:
-                # Copy ensemble tracks
-                jsfile = os.path.join(
-                    cosmos.scenario.cycle_track_ensemble_path,
-                    "track_ensemble.geojson.js",
-                )
-                fo.copy_file(jsfile, self.cycle_path)
-
         except Exception as e:
             print(str(e))
 

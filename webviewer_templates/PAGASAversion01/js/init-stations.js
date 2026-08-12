@@ -39,6 +39,15 @@ var td_icon = L.icon({
     popupAnchor:  [ 8, 16] // point from which the popup should open relative to the iconAnchor
 });
 
+var lpa_icon = L.icon({
+    iconUrl: 'img/markers/LPA_icon_c2.png',
+    iconSize:     [16, 32], // size of the icon
+    shadowSize:   [36, 84], // size of the shadow
+    iconAnchor:   [ 8, 16], // point of the icon which will correspond to marker's location
+    shadowAnchor: [ 8, 16],  // the same for the shadow
+    popupAnchor:  [ 8, 16] // point from which the popup should open relative to the iconAnchor
+});
+
 var ts_icon = L.icon({
     iconUrl: 'img/markers/Tropical_storm_icon_c2.png',
     iconSize:     [16, 32], // size of the icon
@@ -272,6 +281,9 @@ if (track_data) {
                 }
                 else if (feature.properties.category=="TS") {
                     var tcicon=ts_icon
+                }
+                else if (feature.properties.category=="LPA") {
+                    var tcicon=lpa_icon
                 }
                 else if (feature.properties.category=="1") {
                     var tcicon=c1_icon

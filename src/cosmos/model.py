@@ -605,7 +605,7 @@ class Model:
                     fid.write("python run_job_2.py merge_ensemble\n")
                     if not self.type == "beware":
                         fid.write("python run_job_2.py map_tiles\n")
-                    fid.write("python run_job_2.py clean_up\n")
+                    #fid.write("python run_job_2.py clean_up\n")
                 else:
                     fid.write("python run_job_2.py simulate\n")
                     if not self.type == "beware":
@@ -626,7 +626,7 @@ class Model:
                     fid.write("python run_job_2.py merge_ensemble\n")
                     if not self.type == "beware":
                         fid.write("python run_job_2.py map_tiles\n")
-                    fid.write("python run_job_2.py clean_up\n")
+                    #fid.write("python run_job_2.py clean_up\n")
                 else:
                     fid.write("python run_job_2.py simulate\n")
                     if not self.type == "beware":
