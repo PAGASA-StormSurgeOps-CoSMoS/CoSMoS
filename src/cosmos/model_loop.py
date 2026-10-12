@@ -223,66 +223,84 @@ def check_for_finished_simulations() -> list:
     return finished_list
 
 
+def check_model_ready(model) -> bool:
+    """Check whether a waiting model's dependencies and cluster are ready.
+
+    See Also
+    --------
+    cosmos.ModelLoop.update_waiting_list
+    """
+
+    okay = True
+
+    if model.flow_nested:
+        if model.flow_nested.status != "finished":
+            okay = False
+        if model.flow_nested.status == "failed":
+            model.status = "failed"
+    if model.wave_nested:
+        if model.wave_nested.status != "finished":
+            okay = False
+        if model.wave_nested.status == "failed":
+            model.status = "failed"
+    if model.bw_nested:
+        if model.bw_nested.status != "finished":
+            okay = False
+        if model.bw_nested.status == "failed":
+            model.status = "failed"
+    if model.tide_only_model:
+        # We always first want to run the tide only model first!
+        if model.tide_only_model.status != "finished":
+            okay = False
+        if model.tide_only_model.status == "failed":
+            model.status = "failed"
+
+    if okay and model.cluster:
+        # Model appears ready to run, and is member of a cluster
+        # if not model.peak_boundary_twl:
+        #     #  Peak boundary data has not yet been determined
+        #     model.get_peak_boundary_conditions()
+        if not cluster[model.cluster].ready:
+            # This model sits in a cluster that is not ready to run
+            okay = False
+
+    return okay
+
+
 def update_waiting_list() -> list:
     """Check which models can be run next according to their status and prioritization level."""
     # Check which models need to run next
 
     waiting_list = []
-    priorities = []
     running = False
 
     # Check for all clusters if they are ready to run
     for cl in cluster.values():
         cl.check_ready_to_run()
 
-    for model in cosmos.scenario.model:
-        if model.status == "waiting":
-            # This model is waiting
+    # Differentiate deterministic models from their ensemble clones first,
+    # then filter each group through the flow_nested/wave_nested (and other)
+    # eligibility checks separately, so deterministic models are always
+    # considered - and therefore run - before ensemble models.
+    deterministic_models = [m for m in cosmos.scenario.model if not m.ensemble]
+    ensemble_models = [m for m in cosmos.scenario.model if m.ensemble]
 
-            okay = True
+    for group in (deterministic_models, ensemble_models):
+        ready = []
 
-            if model.flow_nested:
-                if model.flow_nested.status != "finished":
-                    okay = False
-                if model.flow_nested.status == "failed":
-                    model.status = "failed"
-            if model.wave_nested:
-                if model.wave_nested.status != "finished":
-                    okay = False
-                if model.wave_nested.status == "failed":
-                    model.status = "failed"
-            if model.bw_nested:
-                if model.bw_nested.status != "finished":
-                    okay = False
-                if model.bw_nested.status == "failed":
-                    model.status = "failed"
-            if model.tide_only_model:
-                # We always first want to run the tide only model first!
-                if model.tide_only_model.status != "finished":
-                    okay = False
-                if model.tide_only_model.status == "failed":
-                    model.status = "failed"
+        for model in group:
+            if model.status == "waiting" and check_model_ready(model):
+                ready.append(model)
 
-            if okay and model.cluster:
-                # Model appears ready to run, and is member of a cluster
-                # if not model.peak_boundary_twl:
-                #     #  Peak boundary data has not yet been determined
-                #     model.get_peak_boundary_conditions()
-                if not cluster[model.cluster].ready:
-                    # This model sits in a cluster that is not ready to run
-                    okay = False
+            if model.status == "running":
+                # There are model(s) running
+                running = True
 
-            if okay:
-                waiting_list.append(model)
-                priorities.append(model.priority)
-
-        if model.status == "running":
-            # There are model(s) running
-            running = True
+        # Sort this group's ready models by priority before moving to the next group
+        ready.sort(key=lambda x: x.priority, reverse=True)
+        waiting_list.extend(ready)
 
     if waiting_list:
-        # Sort waiting list according to prioritization
-        waiting_list.sort(key=lambda x: priorities, reverse=True)
         if cosmos.config.run.run_mode == "serial":
             # Only put first job in waiting list
             waiting_list = waiting_list[:1]

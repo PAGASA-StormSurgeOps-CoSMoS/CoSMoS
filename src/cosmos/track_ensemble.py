@@ -58,7 +58,7 @@ def _generate_per_member_ensemble(tc, track_path, spw_path, tstart, tend, dt) ->
          parametric one. ``meteo_dataset.ds`` is overwritten each iteration;
          only one member is in memory at a time.
 
-    The last (sorted) member's deterministic spw / cyc was already produced
+    The deterministic member's (member 0, else first sorted) spw / cyc was already produced
     by ``meteo._collect_meteo_ensemble_deterministic`` (storm.spw / storm.cyc
     in ``cycle_track_spw_path``).
     """
@@ -184,7 +184,7 @@ def setup_track_ensemble() -> None:
     # 0. Per-member meteo ensemble (scenario.detect_meteo_ensemble_mode found
     #    a <cycle>/<member>/<member>.cyc layout) -> use those tracks AND
     #    compute the spiderweb for each member from THAT member's gridded data
-    #    (not parametric Holland). The last (sorted) member is the deterministic.
+    #    (not parametric Holland). Member 0 (else the first sorted member) is the deterministic.
     # 1. cyc files in the meteo database track_ensemble folder for this cycle ->
     #    use those tracks and compute a parametric spiderweb for each.
     # 2. Otherwise -> generate a synthetic ensemble from the best track (DeMaria).

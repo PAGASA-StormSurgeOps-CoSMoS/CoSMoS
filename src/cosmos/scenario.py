@@ -71,11 +71,11 @@ class Scenario:
         # contains one subdir per ensemble member (each with its own gridded
         # nc files + <member>.cyc track), CoSMoS produces a per-member spw
         # AND per-member amu/amv from THAT member's gridded data. Detected
-        # at runtime by `detect_meteo_ensemble_mode()`; the last (sorted)
-        # member also acts as the deterministic best track.
+        # at runtime by `detect_meteo_ensemble_mode()`; member 0 (else the
+        # first sorted member) also acts as the deterministic best track.
         self.meteo_ensemble_mode = False
         self.ensemble_names = []
-        self.meteo_ensemble_deterministic = None  # last-sorted member name
+        self.meteo_ensemble_deterministic = None  # member 0, else first-sorted member name
         # True when the deterministic member has a usable (non-empty) .cyc
         # track file. When False, the per-member ensemble runs on gridded
         # forcing only: no spiderwebs, no cone.
@@ -409,9 +409,11 @@ class Scenario:
                 <member>.YYYYMMDD_HHMM.nc ...   # member's gridded forcing
 
         When present, set ``self.meteo_ensemble_mode = True``, populate
-        ``self.ensemble_names`` from the (sorted) subdir names, and pick the
-        last one as the deterministic best track. Otherwise leaves the flag
-        ``False`` so the existing flat-layout flow is used.
+        ``self.ensemble_names`` from the (sorted) subdir names, and pick
+        member 0 (e.g. ``0`` / ``0_ens``, the control) as the deterministic
+        best track, falling back to the first sorted member when there is no
+        member 0. Otherwise leaves the flag ``False`` so the existing
+        flat-layout flow is used.
 
         The ``<member>.cyc`` track is optional: when the deterministic
         member's .cyc is missing or empty, ``meteo_ensemble_has_track`` is
@@ -458,16 +460,22 @@ class Scenario:
         if not members:
             return
 
+        # Deterministic (control) member: member 0 when present, otherwise
+        # the first sorted member.
+        deterministic = next(
+            (m for m in members if re.match(r"0+(\D|$)", m)), members[0]
+        )
+
         self.meteo_ensemble_mode = True
         self.ensemble_names = members
-        self.meteo_ensemble_deterministic = members[-1]
+        self.meteo_ensemble_deterministic = deterministic
         self.track_ensemble_nr_realizations = len(members)
 
         # The track is optional: usable only when the deterministic member's
         # .cyc exists AND is non-empty. (collect_meteo may still downgrade
         # this to False if the file turns out to be unparseable.)
         det_cyc = os.path.join(
-            cycle_folder, members[-1], members[-1] + ".cyc"
+            cycle_folder, deterministic, deterministic + ".cyc"
         )
         self.meteo_ensemble_has_track = (
             os.path.exists(det_cyc) and os.path.getsize(det_cyc) > 0
@@ -478,5 +486,5 @@ class Scenario:
         )
         cosmos.log(
             f"Per-member meteo ensemble detected {track_str}: {len(members)} members "
-            f"({', '.join(members)}); deterministic = {members[-1]}"
+            f"({', '.join(members)}); deterministic = {deterministic}"
         )

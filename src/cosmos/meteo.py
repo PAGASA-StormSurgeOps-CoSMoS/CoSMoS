@@ -27,7 +27,7 @@ def read_meteo_database() -> None:
 def _collect_meteo_ensemble_deterministic() -> None:
     """Per-member ensemble meteo: load the deterministic representative.
 
-    The last (sorted) ensemble member supplies the deterministic best track:
+    Member 0 (else the first sorted member) supplies the deterministic best track:
     its gridded data is collected once into the dataset, and its <member>.cyc
     is loaded as ``cosmos.tropical_cyclone``. The wind field is taken straight
     from the gridded data (per-member ensembles never use parametric spws),
@@ -71,7 +71,7 @@ def _collect_meteo_ensemble_deterministic() -> None:
     else:
         cosmos.scenario.meteo_string = meteo_dataset.name
 
-    # Load the last member's .cyc as the deterministic tc. The track is
+    # Load the deterministic member's .cyc as the deterministic tc. The track is
     # optional: when the file is missing, empty, or unparseable, the run
     # continues on gridded forcing only — no spiderweb, no cone. Ensemble
     # model copies are then made by setup_meteo_ensemble_without_track().
@@ -183,7 +183,7 @@ def download_meteo() -> None:
 def collect_meteo() -> None:
     """Collect meteorological data from NetCDF files and process cyclone tracks."""
     # Per-member ensemble meteo: handled separately. The "deterministic"
-    # representative is the last (sorted) member; we collect ONLY that member
+    # representative is member 0 (else the first sorted member); we collect ONLY that member
     # here and use its track + grids to build storm.spw / storm.cyc.
     # The per-member loop (spw + amu/amv for every other member) lives in
     # setup_track_ensemble() and Model.write_meteo_input_files().
