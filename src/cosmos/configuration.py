@@ -174,6 +174,7 @@ class Run:
         self.clean_up_mode = "forecast"
         self.bathtub = False
         self.bathtub_fachs = 0.4
+        self.max_parallel_bathtub = 1  # max nr of bathtub flood map models running at the same time (run_mode "serial")
         self.sfincs_docker = False
         self.hurrywave_docker = False
         self.pre_processing_script = (

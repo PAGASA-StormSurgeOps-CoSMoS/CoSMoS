@@ -386,6 +386,12 @@ class CoSMoS_SFINCS(Model):
                 for member in cosmos.scenario.ensemble_names:
                     f.write(member + "\n")
 
+        # Bathtub flood map models can run side by side (max_parallel_bathtub), so share the cores between them
+        omp_num_threads = self.omp_num_threads
+        nr_parallel = int(cosmos.config.run.max_parallel_bathtub)
+        if bathtub and self.role == "floodmap" and nr_parallel > 1 and omp_num_threads == -1:
+            omp_num_threads = max(1, (os.cpu_count() or 1) // nr_parallel)
+
         # Write run_simulation.bat or .sh file
         if cosmos.config.run.run_mode != "cloud":
             # Make run batch file (only for windows and linux)
@@ -405,7 +411,7 @@ class CoSMoS_SFINCS(Model):
                 else:
                     fid = open(batch_file, "w")
                     fid.write("@ echo off\n")
-                    fid.write(f"set OMP_NUM_THREADS={self.omp_num_threads}\n")
+                    fid.write(f"set OMP_NUM_THREADS={omp_num_threads}\n")
                     exe_path = os.path.join(
                         cosmos.config.executables.sfincs_path, "sfincs.exe"
                     )
@@ -416,7 +422,7 @@ class CoSMoS_SFINCS(Model):
                 fid = open(batch_file, "w")
                 fid.write("#!/bin/bash\n")
                 fid.write("unset LD_LIBRARY_PATH\n")
-                fid.write(f"export OMP_NUM_THREADS={self.omp_num_threads}\n")
+                fid.write(f"export OMP_NUM_THREADS={omp_num_threads}\n")
                 fid.write(
                     "export PATH=" + cosmos.config.executables.sfincs_path + ":$PATH\n"
                 )

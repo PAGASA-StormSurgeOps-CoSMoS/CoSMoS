@@ -267,12 +267,21 @@ def check_model_ready(model) -> bool:
     return okay
 
 
+def is_parallel_bathtub(model) -> bool:
+    """Check whether this is a bathtub flood map model, which can run side by side with others in serial mode."""
+    return bool(
+        cosmos.config.run.bathtub
+        and model.type == "sfincs"
+        and model.role == "floodmap"
+    )
+
+
 def update_waiting_list() -> list:
     """Check which models can be run next according to their status and prioritization level."""
     # Check which models need to run next
 
     waiting_list = []
-    running = False
+    running_list = []
 
     # Check for all clusters if they are ready to run
     for cl in cluster.values():
@@ -294,7 +303,7 @@ def update_waiting_list() -> list:
 
             if model.status == "running":
                 # There are model(s) running
-                running = True
+                running_list.append(model)
 
         # Sort this group's ready models by priority before moving to the next group
         ready.sort(key=lambda x: x.priority, reverse=True)
@@ -302,11 +311,28 @@ def update_waiting_list() -> list:
 
     if waiting_list:
         if cosmos.config.run.run_mode == "serial":
-            # Only put first job in waiting list
-            waiting_list = waiting_list[:1]
-            if running:
-                # There is already a model running. Wait for it to finish.
-                waiting_list = []
+            if is_parallel_bathtub(waiting_list[0]):
+                # Bathtub flood map models can run side by side, but only with each other
+                if all(is_parallel_bathtub(model) for model in running_list):
+                    nr_free = max(1, int(cosmos.config.run.max_parallel_bathtub)) - len(
+                        running_list
+                    )
+                    # Only take the leading bathtub models, so that the order of the waiting list is kept
+                    nr_leading = 0
+                    for model in waiting_list:
+                        if not is_parallel_bathtub(model):
+                            break
+                        nr_leading += 1
+                    waiting_list = waiting_list[: max(0, min(nr_free, nr_leading))]
+                else:
+                    # Another type of model is running. Wait for it to finish.
+                    waiting_list = []
+            else:
+                # Only put first job in waiting list
+                waiting_list = waiting_list[:1]
+                if running_list:
+                    # There is already a model running. Wait for it to finish.
+                    waiting_list = []
         elif cosmos.config.run.run_mode == "parallel":
             # Put all jobs at certain priority level in waiting list
             waiting_list = waiting_list[:]
